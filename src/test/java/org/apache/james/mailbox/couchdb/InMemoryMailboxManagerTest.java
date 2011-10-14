@@ -62,7 +62,7 @@ public class InMemoryMailboxManagerTest extends AbstractMailboxManagerTest {
     protected void createMailboxManager() throws MailboxException {
         
         CouchDbMailboxSessionMapperFactory factory = new CouchDbMailboxSessionMapperFactory();
-        StoreMailboxManager<Long> mailboxManager = new StoreMailboxManager<Long>(factory, new MockAuthenticator());
+        StoreMailboxManager<String> mailboxManager = new StoreMailboxManager<String>(factory, new MockAuthenticator());
         mailboxManager.init();
         
         setMailboxManager(mailboxManager);

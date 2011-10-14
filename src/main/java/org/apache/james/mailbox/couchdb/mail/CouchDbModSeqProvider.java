@@ -28,20 +28,20 @@ import org.apache.james.mailbox.MailboxSession;
 import org.apache.james.mailbox.store.mail.ModSeqProvider;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
 
-public class CouchDbModSeqProvider implements ModSeqProvider<Long>{
-    private final ConcurrentMap<Long, AtomicLong> map = new ConcurrentHashMap<Long, AtomicLong>();
+public class CouchDbModSeqProvider implements ModSeqProvider<String>{
+    private final ConcurrentMap<String, AtomicLong> map = new ConcurrentHashMap<String, AtomicLong>();
 
     @Override
-    public long nextModSeq(MailboxSession session, Mailbox<Long> mailbox) throws MailboxException {
+    public long nextModSeq(MailboxSession session, Mailbox<String> mailbox) throws MailboxException {
         return getHighest(mailbox.getMailboxId()).incrementAndGet();
-
     }
 
     @Override
-    public long highestModSeq(MailboxSession session, Mailbox<Long> mailbox) throws MailboxException {
+    public long highestModSeq(MailboxSession session, Mailbox<String> mailbox) throws MailboxException {
         return getHighest(mailbox.getMailboxId()).get();
     }
-    private AtomicLong getHighest(Long id) {
+    
+    private AtomicLong getHighest(String id) {
         AtomicLong uid = map.get(id);
         if (uid == null) {
             uid = new AtomicLong(0);
