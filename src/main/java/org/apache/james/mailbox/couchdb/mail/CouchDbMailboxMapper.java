@@ -32,35 +32,35 @@ import org.apache.james.mailbox.couchdb.CouchDbUtils;
 import org.apache.james.mailbox.couchdb.mail.model.CouchDbMailbox;
 import org.apache.james.mailbox.store.mail.MailboxMapper;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
-import org.apache.james.mailbox.store.mail.model.impl.SimpleMailbox;
 import org.ektorp.ComplexKey;
 import org.ektorp.support.CouchDbRepositorySupport;
 import org.ektorp.support.View;
 
-public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbox<Long>> implements MailboxMapper<Long> {
+public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbox> implements MailboxMapper<String> {
 
     public CouchDbMailboxMapper() {
-        super((Class<CouchDbMailbox<Long>>) CouchDbMailbox.class, new CouchDbUtils().getDb());
+        super(CouchDbMailbox.class, new CouchDbUtils().getDb());
     }
 
     /**
      * @see org.apache.james.mailbox.store.mail.MailboxMapper#delete(org.apache.james.mailbox.store.mail.model.Mailbox)
      */
-    public void delete(Mailbox<Long> mailbox) throws MailboxException {
+    public void delete(Mailbox<String> mailbox) throws MailboxException {
         remove((CouchDbMailbox) mailbox);
     }
+    
 
     @View(name = "by_mailbox_path", map = "function(doc) { emit([doc.name, doc.user, doc.namespace], doc); }")
-    public List<CouchDbMailbox<Long>> findByMailboxPath(String namespace, String user, String name) {
+    public List<CouchDbMailbox> findByMailboxPath(String namespace, String user, String name) {
         ComplexKey key = ComplexKey.of(name, user, namespace);
         return queryView("by_mailbox_path", key);
     }
-
+    
     /**
      * @see org.apache.james.mailbox.store.mail.MailboxMapper#findMailboxByPath(org.apache.james.mailbox.MailboxPath)
      */
-    public Mailbox<Long> findMailboxByPath(MailboxPath path) throws MailboxException, MailboxNotFoundException {
-        List<CouchDbMailbox<Long>> result = findByMailboxPath(path.getNamespace(), path.getUser(), path.getName());
+    public Mailbox<String> findMailboxByPath(MailboxPath path) throws MailboxException, MailboxNotFoundException {
+        List<CouchDbMailbox> result = findByMailboxPath(path.getNamespace(), path.getUser(), path.getName());
         if(result.isEmpty()) {
             throw new MailboxNotFoundException(path);
         }
@@ -70,10 +70,10 @@ public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbo
     /**
      * @see org.apache.james.mailbox.store.mail.MailboxMapper#findMailboxWithPathLike(org.apache.james.mailbox.MailboxPath)
      */
-    public List<Mailbox<Long>> findMailboxWithPathLike(MailboxPath path) throws MailboxException {
+    public List<Mailbox<String>> findMailboxWithPathLike(MailboxPath path) throws MailboxException {
 //        final String regex = path.getName().replace("%", ".*");
-//        List<Mailbox<Long>> results = new ArrayList<Mailbox<Long>>();
-//        for (final Mailbox<Long> mailbox:mailboxesById.values()) {
+//        List<Mailbox<String>> results = new ArrayList<Mailbox<String>>();
+//        for (final Mailbox<String> mailbox:mailboxesById.values()) {
 //            if (mailbox.getName().matches(regex)) {
 //                results.add(mailbox);
 //            }
@@ -85,7 +85,7 @@ public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbo
     /**
      * @see org.apache.james.mailbox.store.mail.MailboxMapper#save(org.apache.james.mailbox.store.mail.model.Mailbox)
      */
-    public void save(Mailbox<Long> mailbox) throws MailboxException {
+    public void save(Mailbox<String> mailbox) throws MailboxException {
         update((CouchDbMailbox) mailbox);
     }
 
@@ -99,26 +99,27 @@ public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbo
     /**
      * @see org.apache.james.mailbox.store.mail.MailboxMapper#hasChildren(org.apache.james.mailbox.store.mail.model.Mailbox, char)
      */
-    public boolean hasChildren(Mailbox<Long> mailbox, char delimiter) throws MailboxException,
+    public boolean hasChildren(Mailbox<String> mailbox, char delimiter) throws MailboxException,
             MailboxNotFoundException {
         String mailboxName = mailbox.getName() + delimiter;
-        for (final Mailbox<Long> box:mailboxesById.values()) {
-            if (box.getName().startsWith(mailboxName)) {
-                return true;
-            }
-        }
+// TODO:        
+//        for (final Mailbox<String> box:mailboxesById.values()) {
+//            if (box.getName().startsWith(mailboxName)) {
+//                return true;
+//            }
+//        }
         return false;
     }
 
     /**
      * @see org.apache.james.mailbox.store.mail.MailboxMapper#list()
      */
-    public List<Mailbox<Long>> list() throws MailboxException {
-        return queryView("all");
+    public List<Mailbox<String>> list() throws MailboxException {
+        List<?> ret = queryView("all");
+        return (List<Mailbox<String>>) ret;
     }
 
     public <T> T execute(Transaction<T> transaction) throws MailboxException {
         return transaction.run();
     }
-    
 }

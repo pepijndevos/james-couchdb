@@ -31,10 +31,10 @@ import org.apache.james.mailbox.store.mail.MailboxMapper;
 import org.apache.james.mailbox.store.mail.MessageMapper;
 import org.apache.james.mailbox.store.user.SubscriptionMapper;
 
-public class CouchDbMailboxSessionMapperFactory extends MailboxSessionMapperFactory<Long> {
+public class CouchDbMailboxSessionMapperFactory extends MailboxSessionMapperFactory<String> {
 
-    private MailboxMapper<Long> mailboxMapper;
-    private MessageMapper<Long> messageMapper;
+    private MailboxMapper<String> mailboxMapper;
+    private MessageMapper<String> messageMapper;
     private SubscriptionMapper subscriptionMapper;
     
     public CouchDbMailboxSessionMapperFactory() {
@@ -44,12 +44,12 @@ public class CouchDbMailboxSessionMapperFactory extends MailboxSessionMapperFact
     }
     
     @Override
-    public MailboxMapper<Long> createMailboxMapper(MailboxSession session) throws MailboxException {
+    public MailboxMapper<String> createMailboxMapper(MailboxSession session) throws MailboxException {
         return mailboxMapper;
     }
 
     @Override
-    public MessageMapper<Long> createMessageMapper(MailboxSession session) throws MailboxException {
+    public MessageMapper<String> createMessageMapper(MailboxSession session) throws MailboxException {
         return messageMapper;
     }
 
