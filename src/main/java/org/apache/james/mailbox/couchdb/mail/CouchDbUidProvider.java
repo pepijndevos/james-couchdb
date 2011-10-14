@@ -28,21 +28,21 @@ import org.apache.james.mailbox.MailboxSession;
 import org.apache.james.mailbox.store.mail.UidProvider;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
 
-public class CouchDbUidProvider implements UidProvider<Long>{
+public class CouchDbUidProvider implements UidProvider<String>{
 
-    private final ConcurrentMap<Long, AtomicLong> map = new ConcurrentHashMap<Long, AtomicLong>();
+    private final ConcurrentMap<String, AtomicLong> map = new ConcurrentHashMap<String, AtomicLong>();
     
     @Override
-    public long nextUid(MailboxSession session, Mailbox<Long> mailbox) throws MailboxException {
+    public long nextUid(MailboxSession session, Mailbox<String> mailbox) throws MailboxException {
         return getLast(mailbox.getMailboxId()).incrementAndGet();
     }
 
     @Override
-    public long lastUid(MailboxSession session, Mailbox<Long> mailbox) throws MailboxException {
+    public long lastUid(MailboxSession session, Mailbox<String> mailbox) throws MailboxException {
         return getLast(mailbox.getMailboxId()).get();
     }
     
-    private AtomicLong getLast(Long id) {
+    private AtomicLong getLast(String id) {
         AtomicLong uid = map.get(id);
         if (uid == null) {
             uid = new AtomicLong(0);

@@ -42,20 +42,20 @@ import org.apache.james.mailbox.store.mail.model.Mailbox;
 import org.apache.james.mailbox.store.mail.model.Message;
 import org.apache.james.mailbox.store.mail.model.impl.SimpleMessage;
 
-public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
+public class CouchDbMessageMapper extends AbstractMessageMapper<String> {
 
-    private Map<Long, Map<Long, Message<Long>>> mailboxByUid;
+    private Map<String, Map<String, Message<String>>> mailboxByUid;
     private static final int INITIAL_SIZE = 256;
     
-    public CouchDbMessageMapper(MailboxSession session, UidProvider<Long> uidProvider, ModSeqProvider<Long> modSeqProvider) {
+    public CouchDbMessageMapper(MailboxSession session, UidProvider<String> uidProvider, ModSeqProvider<String> modSeqProvider) {
         super(session, uidProvider, modSeqProvider);
-        this.mailboxByUid = new ConcurrentHashMap<Long, Map<Long, Message<Long>>>(INITIAL_SIZE);
+        this.mailboxByUid = new ConcurrentHashMap<String, Map<String, Message<String>>>(INITIAL_SIZE);
     }
     
-    private Map<Long, Message<Long>> getMembershipByUidForMailbox(Mailbox<Long> mailbox) {
-        Map<Long, Message<Long>> membershipByUid = mailboxByUid.get(mailbox.getMailboxId());
+    private Map<String, Message<String>> getMembershipByUidForMailbox(Mailbox<String> mailbox) {
+        Map<String, Message<String>> membershipByUid = mailboxByUid.get(mailbox.getMailboxId());
         if (membershipByUid == null) {
-            membershipByUid = new ConcurrentHashMap<Long, Message<Long>>(INITIAL_SIZE);
+            membershipByUid = new ConcurrentHashMap<String, Message<String>>(INITIAL_SIZE);
             mailboxByUid.put(mailbox.getMailboxId(), membershipByUid);
         }
         return membershipByUid;
@@ -64,16 +64,16 @@ public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
     /**
      * @see org.apache.james.mailbox.store.mail.MessageMapper#countMessagesInMailbox(org.apache.james.mailbox.store.mail.model.Mailbox)
      */
-    public long countMessagesInMailbox(Mailbox<Long> mailbox) throws MailboxException {
+    public long countMessagesInMailbox(Mailbox<String> mailbox) throws MailboxException {
         return getMembershipByUidForMailbox(mailbox).size();
     }
 
     /**
      * @see org.apache.james.mailbox.store.mail.MessageMapper#countUnseenMessagesInMailbox(org.apache.james.mailbox.store.mail.model.Mailbox)
      */
-    public long countUnseenMessagesInMailbox(Mailbox<Long> mailbox) throws MailboxException {
+    public long countUnseenMessagesInMailbox(Mailbox<String> mailbox) throws MailboxException {
         long count = 0;
-        for(Message<Long> member:getMembershipByUidForMailbox(mailbox).values()) {
+        for(Message<String> member:getMembershipByUidForMailbox(mailbox).values()) {
             if (!member.isSeen()) {
                 count++;
             }
@@ -85,7 +85,7 @@ public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
      * @see org.apache.james.mailbox.store.mail.MessageMapper#delete(org.apache.james.mailbox.store.mail.model.Mailbox,
      * org.apache.james.mailbox.store.mail.model.Message)
      */
-    public void delete(Mailbox<Long> mailbox, Message<Long> message) throws MailboxException {
+    public void delete(Mailbox<String> mailbox, Message<String> message) throws MailboxException {
         getMembershipByUidForMailbox(mailbox).remove(message.getUid());
     }
 
@@ -93,24 +93,24 @@ public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
     /**
      * @see org.apache.james.mailbox.store.mail.MessageMapper#findInMailbox(org.apache.james.mailbox.store.mail.model.Mailbox, org.apache.james.mailbox.MessageRange, org.apache.james.mailbox.store.mail.MessageMapper.FetchType, int)
      */
-    public Iterator<Message<Long>> findInMailbox(Mailbox<Long> mailbox, MessageRange set, FetchType ftype, int max) throws MailboxException {
-        List<Message<Long>> results;
+    public Iterator<Message<String>> findInMailbox(Mailbox<String> mailbox, MessageRange set, FetchType ftype, int max) throws MailboxException {
+        List<Message<String>> results;
         final MessageRange.Type type = set.getType();
         switch (type) {
             case ALL:
-                results = new ArrayList<Message<Long>>(getMembershipByUidForMailbox(mailbox).values());
+                results = new ArrayList<Message<String>>(getMembershipByUidForMailbox(mailbox).values());
                 break;
             case FROM:
-                results = new ArrayList<Message<Long>>(getMembershipByUidForMailbox(mailbox).values());
-                for (final Iterator<Message<Long>> it=results.iterator();it.hasNext();) {
+                results = new ArrayList<Message<String>>(getMembershipByUidForMailbox(mailbox).values());
+                for (final Iterator<Message<String>> it=results.iterator();it.hasNext();) {
                    if (it.next().getUid()< set.getUidFrom()) {
                        it.remove(); 
                    }
                 }
                 break;
             case RANGE:
-                results = new ArrayList<Message<Long>>(getMembershipByUidForMailbox(mailbox).values());
-                for (final Iterator<Message<Long>> it=results.iterator();it.hasNext();) {
+                results = new ArrayList<Message<String>>(getMembershipByUidForMailbox(mailbox).values());
+                for (final Iterator<Message<String>> it=results.iterator();it.hasNext();) {
                    final long uid = it.next().getUid();
                 if (uid<set.getUidFrom() || uid>set.getUidTo()) {
                        it.remove(); 
@@ -118,14 +118,14 @@ public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
                 }
                 break;
             case ONE:
-                results  = new ArrayList<Message<Long>>(1);
-                final Message<Long> member = getMembershipByUidForMailbox(mailbox).get(set.getUidFrom());
+                results  = new ArrayList<Message<String>>(1);
+                final Message<String> member = getMembershipByUidForMailbox(mailbox).get(set.getUidFrom());
                 if (member != null) {
                     results.add(member);
                 }
                 break;
             default:
-                results = new ArrayList<Message<Long>>();
+                results = new ArrayList<Message<String>>();
                 break;
         }
         Collections.sort(results);
@@ -140,26 +140,25 @@ public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
     /**
      * @see org.apache.james.mailbox.store.mail.MessageMapper#findRecentMessageUidsInMailbox(org.apache.james.mailbox.store.mail.model.Mailbox)
      */
-    public List<Long> findRecentMessageUidsInMailbox(Mailbox<Long> mailbox) throws MailboxException {
+    public List<Long> findRecentMessageUidsInMailbox(Mailbox<String> mailbox) throws MailboxException {
         final List<Long> results = new ArrayList<Long>();
-        for(Message<Long> member:getMembershipByUidForMailbox(mailbox).values()) {
+        for(Message<String> member : getMembershipByUidForMailbox(mailbox).values()) {
             if (member.isRecent()) {
                 results.add(member.getUid());
             }
         }
         Collections.sort(results);
-        
         return results;
     }
 
     /**
      * @see org.apache.james.mailbox.store.mail.MessageMapper#findFirstUnseenMessageUid(org.apache.james.mailbox.store.mail.model.Mailbox)
      */
-    public Long findFirstUnseenMessageUid(Mailbox<Long> mailbox) throws MailboxException {
-        List<Message<Long>> memberships = new ArrayList<Message<Long>>(getMembershipByUidForMailbox(mailbox).values());
+    public Long findFirstUnseenMessageUid(Mailbox<String> mailbox) throws MailboxException {
+        List<Message<String>> memberships = new ArrayList<Message<String>>(getMembershipByUidForMailbox(mailbox).values());
         Collections.sort(memberships);
         for (int i = 0;  i < memberships.size(); i++) {
-            Message<Long> m = memberships.get(i);
+            Message<String> m = memberships.get(i);
             if (m.isSeen() == false) {
                 return m.getUid();
             }
@@ -181,8 +180,8 @@ public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
     /**
      * @see org.apache.james.mailbox.store.mail.AbstractMessageMapper#copy(org.apache.james.mailbox.store.mail.model.Mailbox, long, long, org.apache.james.mailbox.store.mail.model.Message)
      */
-    protected MessageMetaData copy(Mailbox<Long> mailbox, long uid, long modSeq, Message<Long> original) throws MailboxException {
-        SimpleMessage<Long> message = new SimpleMessage<Long>(mailbox, original);
+    protected MessageMetaData copy(Mailbox<String> mailbox, long uid, long modSeq, Message<String> original) throws MailboxException {
+        SimpleMessage<String> message = new SimpleMessage<String>(mailbox, original);
         message.setUid(uid);
         message.setModSeq(modSeq);
         Flags flags = original.createFlags();
@@ -196,11 +195,11 @@ public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
     /**
      * @see org.apache.james.mailbox.store.mail.AbstractMessageMapper#save(org.apache.james.mailbox.store.mail.model.Mailbox, org.apache.james.mailbox.store.mail.model.Message)
      */
-    protected MessageMetaData save(Mailbox<Long> mailbox, Message<Long> message) throws MailboxException {
-        SimpleMessage<Long> copy = new SimpleMessage<Long>(mailbox, message);
+    protected MessageMetaData save(Mailbox<String> mailbox, Message<String> message) throws MailboxException {
+        SimpleMessage<String> copy = new SimpleMessage<String>(mailbox, message);
         copy.setUid(message.getUid());
         copy.setModSeq(message.getModSeq());
-        getMembershipByUidForMailbox(mailbox).put(message.getUid(), copy);
+        getMembershipByUidForMailbox(mailbox).put(message.getMailboxId(), copy);
         
         return new SimpleMessageMetaData(message);
     }
@@ -227,12 +226,12 @@ public class CouchDbMessageMapper extends AbstractMessageMapper<Long> {
     }
 
     @Override
-    public Map<Long, MessageMetaData> expungeMarkedForDeletionInMailbox(final Mailbox<Long> mailbox, MessageRange set) throws MailboxException {
+    public Map<Long, MessageMetaData> expungeMarkedForDeletionInMailbox(final Mailbox<String> mailbox, MessageRange set) throws MailboxException {
         final Map<Long, MessageMetaData> filteredResult = new HashMap<Long, MessageMetaData>();
 
-        Iterator<Message<Long>> it = findInMailbox(mailbox, set, FetchType.Metadata, -1);
+        Iterator<Message<String>> it = findInMailbox(mailbox, set, FetchType.Metadata, -1);
         while(it.hasNext()) {
-            Message<Long> member = it.next();
+            Message<String> member = it.next();
             if (member.isDeleted()) {
                 filteredResult.put(member.getUid(), new SimpleMessageMetaData(member));
 

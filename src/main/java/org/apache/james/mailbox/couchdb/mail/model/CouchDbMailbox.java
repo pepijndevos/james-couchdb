@@ -12,14 +12,16 @@ import org.ektorp.support.TypeDiscriminator;
  * Time: 4:46 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CouchDbMailbox<Long> extends CouchDbDocument implements Mailbox {
+public class CouchDbMailbox extends CouchDbDocument implements Mailbox<String> {
+    private static final long serialVersionUID = -5637388554102567999L;
+    
     private String user;
     private String namespace;
     private String name;
     private long uidValidity;
 
     @JsonIgnore
-    public Object getMailboxId() {
+    public String getMailboxId() {
         return getId();
     }
 
