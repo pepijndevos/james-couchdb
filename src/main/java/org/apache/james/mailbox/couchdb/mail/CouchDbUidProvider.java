@@ -19,39 +19,35 @@
 
 package org.apache.james.mailbox.couchdb.mail;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.james.mailbox.MailboxException;
 import org.apache.james.mailbox.MailboxSession;
+import org.apache.james.mailbox.couchdb.mail.model.CouchDbMailbox;
 import org.apache.james.mailbox.store.mail.UidProvider;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
 
 public class CouchDbUidProvider implements UidProvider<String>{
 
-    private final ConcurrentMap<String, AtomicLong> map = new ConcurrentHashMap<String, AtomicLong>();
+    private CouchDbMailboxMapper mailboxMapper = new CouchDbMailboxMapper();
     
     @Override
     public long nextUid(MailboxSession session, Mailbox<String> mailbox) throws MailboxException {
-        return getLast(mailbox.getMailboxId()).incrementAndGet();
+        CouchDbMailbox couchMailbox = (CouchDbMailbox) mailbox;
+
+        while(true) {
+            ((CouchDbMailbox) mailbox).incrementLastUid();
+            try {
+                mailboxMapper.save(couchMailbox);
+                return couchMailbox.getLastUid();
+            } catch (MailboxException e) {
+                couchMailbox = mailboxMapper.get(couchMailbox.getId());
+            }
+        }
     }
 
     @Override
     public long lastUid(MailboxSession session, Mailbox<String> mailbox) throws MailboxException {
-        return getLast(mailbox.getMailboxId()).get();
+        return ((CouchDbMailbox) mailbox).getLastUid();
     }
-    
-    private AtomicLong getLast(String id) {
-        AtomicLong uid = map.get(id);
-        if (uid == null) {
-            uid = new AtomicLong(0);
-            AtomicLong u = map.putIfAbsent(id, uid);
-            if (u != null) {
-                uid = u;
-            }
-        }
-        return uid;
-    }
+
 
 }

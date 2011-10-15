@@ -16,7 +16,7 @@ import org.ektorp.http.*;
 public class CouchDbUtils {
     
     // TODO: a way to get user and password from configuration 
-    HttpClient httpClient = new StdHttpClient.Builder().username("admin").password("sa").build();
+    HttpClient httpClient = new StdHttpClient.Builder().build();
     
     CouchDbInstance dbInstance = new StdCouchDbInstance(httpClient);
     // if the second parameter is true, the database will be created if it doesn't exists

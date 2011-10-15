@@ -18,20 +18,20 @@
  ****************************************************************/
 package org.apache.james.mailbox.couchdb;
 
+import org.apache.james.mailbox.AbstractMailboxManagerTest;
 import org.apache.james.mailbox.BadCredentialsException;
 import org.apache.james.mailbox.MailboxException;
-import org.apache.james.mailbox.AbstractMailboxManagerTest;
 import org.apache.james.mailbox.MailboxSession;
+import org.apache.james.mailbox.couchdb.mail.CouchDbMailboxManager;
 import org.apache.james.mailbox.store.MockAuthenticator;
-import org.apache.james.mailbox.store.StoreMailboxManager;
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.LoggerFactory;
 
 /**
- * InMemoryMailboxManagerTest that extends the MailboxManagerTest.
+ * CouchDbMailboxManagerTest that extends the MailboxManagerTest.
  */
-public class InMemoryMailboxManagerTest extends AbstractMailboxManagerTest {
+public class CouchDbMailboxManagerTest extends AbstractMailboxManagerTest {
     
     /**
      * Setup the mailboxManager.
@@ -62,7 +62,7 @@ public class InMemoryMailboxManagerTest extends AbstractMailboxManagerTest {
     protected void createMailboxManager() throws MailboxException {
         
         CouchDbMailboxSessionMapperFactory factory = new CouchDbMailboxSessionMapperFactory();
-        StoreMailboxManager<String> mailboxManager = new StoreMailboxManager<String>(factory, new MockAuthenticator());
+        CouchDbMailboxManager mailboxManager = new CouchDbMailboxManager(factory, new MockAuthenticator());
         mailboxManager.init();
         
         setMailboxManager(mailboxManager);

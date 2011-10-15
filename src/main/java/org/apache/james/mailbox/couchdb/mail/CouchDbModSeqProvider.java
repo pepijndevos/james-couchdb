@@ -19,37 +19,33 @@
 
 package org.apache.james.mailbox.couchdb.mail;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.james.mailbox.MailboxException;
 import org.apache.james.mailbox.MailboxSession;
+import org.apache.james.mailbox.couchdb.mail.model.CouchDbMailbox;
 import org.apache.james.mailbox.store.mail.ModSeqProvider;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
 
 public class CouchDbModSeqProvider implements ModSeqProvider<String>{
-    private final ConcurrentMap<String, AtomicLong> map = new ConcurrentHashMap<String, AtomicLong>();
+
+    private CouchDbMailboxMapper mailboxMapper = new CouchDbMailboxMapper();
 
     @Override
     public long nextModSeq(MailboxSession session, Mailbox<String> mailbox) throws MailboxException {
-        return getHighest(mailbox.getMailboxId()).incrementAndGet();
+        CouchDbMailbox couchMailbox = (CouchDbMailbox) mailbox;
+
+        while(true) {
+            ((CouchDbMailbox) mailbox).incrementHighestModSeq();
+            try {
+                mailboxMapper.save(couchMailbox);
+                return couchMailbox.getHighestModSeq();
+            } catch (MailboxException e) {
+                couchMailbox = mailboxMapper.get(couchMailbox.getId());
+            }
+        }
     }
 
     @Override
     public long highestModSeq(MailboxSession session, Mailbox<String> mailbox) throws MailboxException {
-        return getHighest(mailbox.getMailboxId()).get();
-    }
-    
-    private AtomicLong getHighest(String id) {
-        AtomicLong uid = map.get(id);
-        if (uid == null) {
-            uid = new AtomicLong(0);
-            AtomicLong u = map.putIfAbsent(id, uid);
-            if (u != null) {
-                uid = u;
-            }
-        }
-        return uid;
+        return ((CouchDbMailbox) mailbox).getHighestModSeq();
     }
 }

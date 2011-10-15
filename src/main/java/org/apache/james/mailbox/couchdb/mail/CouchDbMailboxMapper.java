@@ -18,13 +18,6 @@
  ****************************************************************/
 package org.apache.james.mailbox.couchdb.mail;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.james.mailbox.MailboxException;
 import org.apache.james.mailbox.MailboxNotFoundException;
 import org.apache.james.mailbox.MailboxPath;
@@ -36,6 +29,9 @@ import org.ektorp.ComplexKey;
 import org.ektorp.support.CouchDbRepositorySupport;
 import org.ektorp.support.View;
 
+import java.util.List;
+
+@View(name = "all", map = "function(doc) { if (doc.user && doc.name && doc.namespace) emit( null, doc._id )}")
 public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbox> implements MailboxMapper<String> {
 
     public CouchDbMailboxMapper() {
@@ -86,7 +82,12 @@ public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbo
      * @see org.apache.james.mailbox.store.mail.MailboxMapper#save(org.apache.james.mailbox.store.mail.model.Mailbox)
      */
     public void save(Mailbox<String> mailbox) throws MailboxException {
-        update((CouchDbMailbox) mailbox);
+        // I thought update did this on its own.
+        if(mailbox.getMailboxId() != null) {
+            update((CouchDbMailbox) mailbox);
+        } else {
+            add((CouchDbMailbox) mailbox);
+        }
     }
 
     /**
@@ -115,7 +116,7 @@ public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbo
      * @see org.apache.james.mailbox.store.mail.MailboxMapper#list()
      */
     public List<Mailbox<String>> list() throws MailboxException {
-        List<?> ret = queryView("all");
+        List<?> ret = getAll();
         return (List<Mailbox<String>>) ret;
     }
 
