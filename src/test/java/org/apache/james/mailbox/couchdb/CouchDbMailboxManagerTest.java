@@ -40,6 +40,10 @@ public class CouchDbMailboxManagerTest extends AbstractMailboxManagerTest {
      */
     @Before
     public void setup() throws Exception {
+        
+        // TODO: database name should be configurable here and in Manager
+        new CouchDbUtils().getDbInstance().deleteDatabase("james");
+        
         createMailboxManager();
     }
     

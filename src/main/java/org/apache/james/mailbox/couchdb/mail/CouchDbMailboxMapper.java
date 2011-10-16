@@ -36,6 +36,9 @@ public class CouchDbMailboxMapper extends CouchDbRepositorySupport<CouchDbMailbo
 
     public CouchDbMailboxMapper() {
         super(CouchDbMailbox.class, new CouchDbUtils().getDb());
+        
+        // Create design and needed views in couchdb
+        initStandardDesignDocument();
     }
 
     /**
