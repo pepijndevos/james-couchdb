@@ -11,14 +11,14 @@ import org.apache.james.mailbox.store.StoreMailboxManager;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
 
 
-public class CouchDbMailboxManager extends StoreMailboxManager {
+public class CouchDbMailboxManager extends StoreMailboxManager<String> {
 
 
-    public CouchDbMailboxManager(MailboxSessionMapperFactory mailboxSessionMapperFactory, Authenticator authenticator, MailboxPathLocker locker) {
+    public CouchDbMailboxManager(MailboxSessionMapperFactory<String> mailboxSessionMapperFactory, Authenticator authenticator, MailboxPathLocker locker) {
         super(mailboxSessionMapperFactory, authenticator, locker);
     }
 
-    public CouchDbMailboxManager(MailboxSessionMapperFactory mailboxSessionMapperFactory, Authenticator authenticator) {
+    public CouchDbMailboxManager(MailboxSessionMapperFactory<String> mailboxSessionMapperFactory, Authenticator authenticator) {
         super(mailboxSessionMapperFactory, authenticator);
     }
 
@@ -29,6 +29,8 @@ public class CouchDbMailboxManager extends StoreMailboxManager {
 
     @Override
     protected Mailbox<String> doCreateMailbox(MailboxPath path, MailboxSession session) throws MailboxException {
-        return (Mailbox<String>) new CouchDbMailbox(path, randomUidValidity());
+        Mailbox<String> mailbox =  new CouchDbMailbox(path, randomUidValidity());
+        getMapperFactory().getMailboxMapper(session).save(mailbox);
+        return mailbox;
     }
 }
