@@ -24,6 +24,7 @@ import org.apache.james.mailbox.MailboxSession;
 import org.apache.james.mailbox.couchdb.mail.model.CouchDbMailbox;
 import org.apache.james.mailbox.store.mail.ModSeqProvider;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
+import org.ektorp.UpdateConflictException;
 
 public class CouchDbModSeqProvider implements ModSeqProvider<String>{
 
@@ -38,7 +39,7 @@ public class CouchDbModSeqProvider implements ModSeqProvider<String>{
             try {
                 mailboxMapper.save(couchMailbox);
                 return couchMailbox.getHighestModSeq();
-            } catch (MailboxException e) {
+            } catch (UpdateConflictException e) {
                 couchMailbox = mailboxMapper.get(couchMailbox.getId());
             }
         }
